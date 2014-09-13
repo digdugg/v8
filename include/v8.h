@@ -4492,6 +4492,8 @@ class V8_EXPORT Isolate {
    */
   int ContextDisposedNotification();
 
+  void NWClearPendingException();
+
  private:
   template<class K, class V, class Traits> friend class PersistentValueMap;
 
