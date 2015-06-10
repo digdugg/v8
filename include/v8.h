@@ -986,13 +986,11 @@ class V8_EXPORT Script {
    * A shorthand for ScriptCompiler::Compile().
    */
   static Local<Script> Compile(Handle<String> source,
-                               ScriptOrigin* origin = NULL,
-                               bool nwsnapshot = false);
+                               ScriptOrigin* origin = NULL);
 
   // To be decprecated, use the Compile above.
   static Local<Script> Compile(Handle<String> source,
-                               Handle<String> file_name,
-                               bool nwsnapshot = false);
+                               Handle<String> file_name);
 
   /**
    * Runs the script returning the resulting value. It will be run in the
@@ -1115,8 +1113,7 @@ class V8_EXPORT ScriptCompiler {
    */
   static Local<UnboundScript> CompileUnbound(
       Isolate* isolate, Source* source,
-      CompileOptions options = kNoCompileOptions,
-      bool nwsnapshot = false);
+      CompileOptions options = kNoCompileOptions);
 
   /**
    * Compiles the specified script (bound to current context).
@@ -1131,8 +1128,7 @@ class V8_EXPORT ScriptCompiler {
    */
   static Local<Script> Compile(
       Isolate* isolate, Source* source,
-      CompileOptions options = kNoCompileOptions,
-      bool nwsnapshot = false);
+      CompileOptions options = kNoCompileOptions);
 };
 
 
@@ -4492,8 +4488,6 @@ class V8_EXPORT Isolate {
    */
   int ContextDisposedNotification();
 
-  void NWClearPendingException();
-
  private:
   template<class K, class V, class Traits> friend class PersistentValueMap;
 
@@ -4864,7 +4858,7 @@ class V8_EXPORT V8 {
    * initialize from scratch.  This function is called implicitly if
    * you use the API without calling it first.
    */
-  static bool Initialize(const char* nw_snapshot_file = NULL);
+  static bool Initialize();
 
   /**
    * Allows the host application to provide a callback which can be used

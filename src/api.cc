@@ -204,13 +204,11 @@ static inline bool IsExecutionTerminatingCheck(i::Isolate* isolate) {
 // --- S t a t i c s ---
 
 
-static bool InitializeHelper(i::Isolate* isolate, const char* nw_snapshot_file = NULL) {
+static bool InitializeHelper(i::Isolate* isolate) {
   // If the isolate has a function entry hook, it needs to re-build all its
-  // code stubs with entry hooks embedded, so let's deserialize a
-  // snapshot.
-  const char* nwsnapshot_file = nw_snapshot_file ? nw_snapshot_file : i::FLAG_nwsnapshot_path;
+  // code stubs with entry hooks embedded, so let's deserialize a snapshot.
   if (isolate == NULL || isolate->function_entry_hook() == NULL) {
-    if (i::Snapshot::Initialize(nwsnapshot_file))
+    if (i::Snapshot::Initialize())
       return true;
   }
   return i::V8::Initialize(NULL);
@@ -1700,8 +1698,7 @@ Local<UnboundScript> Script::GetUnboundScript() {
 Local<UnboundScript> ScriptCompiler::CompileUnbound(
     Isolate* v8_isolate,
     Source* source,
-    CompileOptions options,
-    bool nwsnapshot) {
+    CompileOptions options) {
   i::Isolate* isolate = reinterpret_cast<i::Isolate*>(v8_isolate);
   ON_BAILOUT(isolate, "v8::ScriptCompiler::CompileUnbound()",
              return Local<UnboundScript>());
@@ -1751,7 +1748,7 @@ Local<UnboundScript> ScriptCompiler::CompileUnbound(
     i::Handle<i::SharedFunctionInfo> result = i::Compiler::CompileScript(
         str, name_obj, line_offset, column_offset, is_shared_cross_origin,
         isolate->global_context(), NULL, &script_data, options,
-        i::NOT_NATIVES_CODE, nwsnapshot);
+        i::NOT_NATIVES_CODE);
     has_pending_exception = result.is_null();
     if (has_pending_exception && script_data != NULL) {
       // This case won't happen during normal operation; we have compiled
@@ -1781,40 +1778,37 @@ Local<UnboundScript> ScriptCompiler::CompileUnbound(
 Local<Script> ScriptCompiler::Compile(
     Isolate* v8_isolate,
     Source* source,
-    CompileOptions options,
-    bool nwsnapshot) {
+    CompileOptions options) {
   i::Isolate* isolate = reinterpret_cast<i::Isolate*>(v8_isolate);
   ON_BAILOUT(isolate, "v8::ScriptCompiler::Compile()", return Local<Script>());
   LOG_API(isolate, "ScriptCompiler::CompiletBound()");
   ENTER_V8(isolate);
-  Local<UnboundScript> generic = CompileUnbound(v8_isolate, source, options, nwsnapshot);
+  Local<UnboundScript> generic = CompileUnbound(v8_isolate, source, options);
   if (generic.IsEmpty()) return Local<Script>();
   return generic->BindToCurrentContext();
 }
 
 
 Local<Script> Script::Compile(v8::Handle<String> source,
-                              v8::ScriptOrigin* origin,
-                              bool nwsnapshot) {
+                              v8::ScriptOrigin* origin) {
   i::Handle<i::String> str = Utils::OpenHandle(*source);
   if (origin) {
     ScriptCompiler::Source script_source(source, *origin);
     return ScriptCompiler::Compile(
         reinterpret_cast<v8::Isolate*>(str->GetIsolate()),
-        &script_source, ScriptCompiler::kNoCompileOptions, nwsnapshot);
+        &script_source);
   }
   ScriptCompiler::Source script_source(source);
   return ScriptCompiler::Compile(
       reinterpret_cast<v8::Isolate*>(str->GetIsolate()),
-      &script_source, ScriptCompiler::kNoCompileOptions, nwsnapshot);
+      &script_source);
 }
 
 
 Local<Script> Script::Compile(v8::Handle<String> source,
-                              v8::Handle<String> file_name,
-                              bool nwsnapshot) {
+                              v8::Handle<String> file_name) {
   ScriptOrigin origin(file_name);
-  return Compile(source, &origin, nwsnapshot);
+  return Compile(source, &origin);
 }
 
 
@@ -4964,12 +4958,12 @@ void v8::V8::ShutdownPlatform() {
 }
 
 
-bool v8::V8::Initialize(const char* nw_snapshot_file) {
+bool v8::V8::Initialize() {
   i::Isolate* isolate = i::Isolate::UncheckedCurrent();
   if (isolate != NULL && isolate->IsInitialized()) {
     return true;
   }
-  return InitializeHelper(isolate, nw_snapshot_file);
+  return InitializeHelper(isolate);
 }
 
 
@@ -6380,11 +6374,6 @@ v8::Local<Value> Isolate::ThrowException(v8::Local<v8::Value> value) {
   return v8::Undefined(reinterpret_cast<v8::Isolate*>(isolate));
 }
 
-
-void Isolate::NWClearPendingException() {
-  i::Isolate* isolate = reinterpret_cast<i::Isolate*>(this);
-  isolate->clear_pending_exception();
-}
 
 void Isolate::SetObjectGroupId(internal::Object** object, UniqueId id) {
   i::Isolate* internal_isolate = reinterpret_cast<i::Isolate*>(this);
