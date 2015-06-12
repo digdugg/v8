@@ -226,7 +226,7 @@ static inline bool IsContinuationCharacter(byte chr) {
 
 
 // This method decodes an UTF-8 value according to RFC 3629.
-uchar Utf8::CalculateValue(const byte* str, size_t max_length, size_t* cursor) {
+uchar Utf8::CalculateValue(const byte* str, unsigned max_length, unsigned* cursor) {
   size_t length = NonASCIISequenceLength(str[0]);
   if (length == 0 || max_length < length) {
     *cursor += 1;
